@@ -16,7 +16,7 @@ func Create(filename string, entity interface{}) error {
 
 	jsonBytes = append(jsonBytes, '\n')
 
-	file, err := os.OpenFile(fmt.Sprintf("internal/repos/file_repository/datastore/%s.txt", filename), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	file, err := os.OpenFile(fmt.Sprintf("internal/db/repos/%s.txt", filename), os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 	defer file.Close()
 
 	_, err = file.Write(jsonBytes)

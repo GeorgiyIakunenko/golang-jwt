@@ -2,21 +2,21 @@ package main
 
 import (
 	"fmt"
-	"homework2/internal/models/user"
-	"homework2/internal/repos/file_repository"
+	"homework2/internal/db/models"
+	"homework2/internal/db/repos"
 	"os"
 )
 
 func main() {
 
-	filepath := "internal/repos/file_repository/datastore/userDataStorage.txt"
+	filepath := "internal/db/repos/userDataStorage.txt"
 	os.Remove(filepath)
 
-	Repository := file_repository.NewUserFileRepository()
+	Repository := repos.NewUserFileRepository()
 
-	GoshaUser := user.User{ID: 1, FirstName: "Georgiy", LastName: "Iakunenko", Email: "goshanyakunenko@gmail.com", Password: "2004"}
-	MishaUser := user.User{ID: 2, FirstName: "Misha", LastName: "Kovach", Email: "misha@gmail.com", Password: "5060"}
-	MishaUser2 := user.User{ID: 2, FirstName: "Misha2", LastName: "Kovash2", Email: "misha2@gmail.com", Password: "50602"}
+	GoshaUser := models.User{ID: 1, FirstName: "Georgiy", LastName: "Iakunenko", Email: "goshanyakunenko@gmail.com", Password: "2004"}
+	MishaUser := models.User{ID: 2, FirstName: "Misha", LastName: "Kovach", Email: "misha@gmail.com", Password: "5060"}
+	MishaUser2 := models.User{ID: 2, FirstName: "Misha2", LastName: "Kovash2", Email: "misha2@gmail.com", Password: "50602"}
 
 	fmt.Println("\n-------------------Print added user---------------\n")
 
