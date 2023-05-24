@@ -7,10 +7,14 @@ import (
 )
 
 type AuthHandler struct {
+	cfg *Config
 }
 
-func NewAuthHandler() *AuthHandler {
-	return &AuthHandler{}
+func NewAuthHandler(cfg *Config) *AuthHandler {
+
+	return &AuthHandler{
+		cfg: cfg,
+	}
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -33,14 +37,21 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		accessString, err := GenerateToken(user.ID, 2, "access_token_secret")
+		accessString, err := GenerateToken(user.ID, h.cfg.AccessTokenLifetimeMinutes, h.cfg.AccessTokenSecret)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		refreshToken, err := GenerateToken(user.ID, h.cfg.RefreshTokenLifetimeMinutes, h.cfg.RefreshTokenSecret)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
 		resp := LoginResponse{
-			AccessToken: accessString, // secret token is one direction
+			AccessToken:  accessString, // secret token is one direction
+			RefreshToken: refreshToken,
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -52,10 +63,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 type UserHandler struct {
+	cfg *Config
 }
 
-func NewUserHandler() *UserHandler {
-	return &UserHandler{}
+func NewUserHandler(cfg *Config) *UserHandler {
+	return &UserHandler{
+		cfg: cfg,
+	}
 }
 
 func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +78,7 @@ func (h *UserHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 		AuthHeader := r.Header.Get("Authorization")
 		tokenString := GetTokenFromBearerString(AuthHeader)
 
-		claims, err := ValidateToken(tokenString, "access_token_secret")
+		claims, err := ValidateToken(tokenString, h.cfg.AccessTokenSecret)
 		if err != nil {
 			http.Error(w, "invalid credentials", http.StatusUnauthorized)
 			return

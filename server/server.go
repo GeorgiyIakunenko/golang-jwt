@@ -6,8 +6,11 @@ import (
 )
 
 func Start() {
-	authHandler := NewAuthHandler()
-	userHandler := NewUserHandler()
+
+	cfg := NewConfig()
+
+	authHandler := NewAuthHandler(cfg)
+	userHandler := NewUserHandler(cfg)
 
 	http.HandleFunc("/login", authHandler.Login)
 	http.HandleFunc("/profile", userHandler.GetProfile)
