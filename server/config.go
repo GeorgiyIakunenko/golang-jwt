@@ -4,14 +4,7 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
-)
-
-const (
-	//port                        = ":8080"
-	accessTokenSecret           = "access_token_secret"
-	refreshTokenSecret          = "refresh_token_secret"
-	accessTokenLifetimeMinutes  = 3
-	refreshTokenLifetimeMinutes = 180
+	"strconv"
 )
 
 type Config struct {
@@ -29,11 +22,21 @@ func NewConfig() *Config {
 		log.Fatal("Error loading .env file")
 	}
 
+	accessTokenLifetimeMinutes, err := strconv.Atoi(os.Getenv("ACCESS_TOKEN_LIFETIME_MINUTES"))
+	if err != nil {
+		log.Fatal("Error parsing ACCESS_TOKEN_LIFETIME_MINUTES:", err)
+	}
+
+	refreshTokenLifetimeMinutes, err := strconv.Atoi(os.Getenv("REFRESH_TOKEN_LIFETIME_MINUTES"))
+	if err != nil {
+		log.Fatal("Error parsing REFRESH_TOKEN_LIFETIME_MINUTES:", err)
+	}
+
 	return &Config{
 		Port:                        os.Getenv("PORT"),
-		AccessTokenSecret:           accessTokenSecret,
-		AccessTokenLifetimeMinutes:  accessTokenLifetimeMinutes,
-		RefreshTokenSecret:          refreshTokenSecret,
-		RefreshTokenLifetimeMinutes: refreshTokenLifetimeMinutes,
+		AccessTokenSecret:           os.Getenv("ACCESS_TOKEN_SECRET"),
+		AccessTokenLifetimeMinutes:  int(accessTokenLifetimeMinutes),
+		RefreshTokenSecret:          os.Getenv("REFRESH_TOKEN_SECRET"),
+		RefreshTokenLifetimeMinutes: int(refreshTokenLifetimeMinutes),
 	}
 }
