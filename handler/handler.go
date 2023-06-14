@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"golang-jwt/config"
 	"golang-jwt/repo"
-	"golang-jwt/request"
-	"golang-jwt/response"
-	"golang-jwt/token"
+	"golang-jwt/server/request"
+	"golang-jwt/server/response"
+	"golang-jwt/server/service"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
 )
@@ -26,30 +26,30 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	case "POST":
 		req := new(request.LoginRequest)
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			response.SendBadRequestError(w, err)
 			return
 		}
 
 		user, err := repo.NewUserRepository().GetUserByEmail(req.Email)
 		if err != nil {
-			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			response.SendInvalidCredentials(w)
 			return
 		}
 
 		if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			response.SendInvalidCredentials(w)
 			return
 		}
 
-		accessString, err := token.GenerateToken(user.ID, h.cfg.AccessLifetimeMinutes, h.cfg.AccessSecret)
+		accessString, err := service.GenerateToken(user.ID, h.cfg.AccessLifetimeMinutes, h.cfg.AccessSecret)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			response.SendServerError(w, err)
 			return
 		}
 
-		refreshString, err := token.GenerateToken(user.ID, h.cfg.RefreshLifetimeMinutes, h.cfg.RefreshSecret)
+		refreshString, err := service.GenerateToken(user.ID, h.cfg.RefreshLifetimeMinutes, h.cfg.RefreshSecret)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			response.SendServerError(w, err)
 			return
 		}
 
@@ -58,8 +58,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			RefreshToken: refreshString,
 		}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
+		response.SendOk(w, resp)
 	default:
 		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
 	}
@@ -67,6 +66,33 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 type UserHandler struct {
 	cfg *config.Config
+}
+
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "POST":
+		req := new(request.RegisterRequest)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			response.SendBadRequestError(w, err)
+			return
+		}
+
+		user, err := repo.NewUserRepository().RegisterUser(*req)
+		if err != nil {
+			response.SendBadRequestError(w, err)
+			return
+		}
+		response.SendOk(w, user)
+	default:
+		http.Error(w, "Only POST method is allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+
+	}
 }
 
 func NewUserHandler(cfg *config.Config) *AuthHandler {
@@ -78,9 +104,9 @@ func NewUserHandler(cfg *config.Config) *AuthHandler {
 func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		claims, err := token.ValidateToken(token.GetTokenFromBearerString(r.Header.Get("Authorization")), h.cfg.AccessSecret)
+		claims, err := service.ValidateToken(service.GetTokenFromBearerString(r.Header.Get("Authorization")), h.cfg.AccessSecret)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			response.SendInvalidCredentials(w)
 			return
 		}
 
@@ -96,8 +122,7 @@ func (h *AuthHandler) GetProfile(w http.ResponseWriter, r *http.Request) {
 			Email: user.Email,
 		}
 
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(resp)
+		response.SendOk(w, resp)
 	default:
 		http.Error(w, "Only GET method is allowed", http.StatusMethodNotAllowed)
 	}

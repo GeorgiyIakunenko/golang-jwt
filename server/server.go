@@ -13,6 +13,7 @@ func Start(cfg *config.Config) {
 
 	http.HandleFunc("/login", authHandler.Login)
 	http.HandleFunc("/profile", userHandler.GetProfile)
+	http.HandleFunc("/register", userHandler.Register)
 
 	log.Fatal(http.ListenAndServe(cfg.Port, nil))
 }
