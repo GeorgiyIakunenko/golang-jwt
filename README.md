@@ -1,1 +1,1 @@
-# golang-jwt
+# golang-jwt Iakunenko Georgiy
